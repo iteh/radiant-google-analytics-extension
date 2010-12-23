@@ -2,40 +2,67 @@ module GoogleAnalytics
   include Radiant::Taggable
 
 
-  desc "Creates Google Analytics with id content"
+  desc %{
+  Creates Google Analytics code with id content
+    *Usage:*
+    <pre><code><r:google_analytics id="YOUR_ID" [type="s"] [domain="domain.com"]</code></pre>
+    *Attributes:*
+
+    * @id@ your id
+    * @type@ defaults to 's', other options 'sub' or 'multi'
+    * @domain@ needed for type 'sub'
+
+  }
   tag "google_analytics" do |tag|
     type = tag.attr['type'] || 's' # single domain 's' OR with many subdomain 'm'
-    domian = tag.attr['domain'] # required if type == 'm' // without www. just the name, example: thisisdomain.com
-    script = %{<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-}
+    script = case type
+              when 's' then
+       %{<script type="text/javascript">
 
-    if type == 's'
-sub = %{<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("#{tag.attr['id']}");
-pageTracker._trackPageview();
-} catch(err) {}</script>}
-    else
-      if type == 'm'
-sub = %{<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("#{tag.attr['id']}");
-pageTracker._setDomainName(".#{tag.attr['domain']}");
-pageTracker._trackPageview();
-} catch(err) {}</script>}
-      else
-sub = %{<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("#{tag.attr['id']}");
-pageTracker._setDomainName("none");
-pageTracker._setAllowLinker(true);
-pageTracker._trackPageview();
-} catch(err) {}</script>}
-      end
-    end
-    script + sub
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', '#{tag.attr['id']}']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>}
+              when 'sub'  then
+       %{<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', '#{tag.attr['id']}']);
+  _gaq.push(['_setDomainName', '.#{tag.attr['domain']}']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>}
+              when 'multi'   then
+       %{<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', '#{tag.attr['id']}']);
+  _gaq.push(['_setDomainName', 'none']);
+  _gaq.push(['_setAllowLinker', true]);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>}
+            end
+
+    script
   end
 end
